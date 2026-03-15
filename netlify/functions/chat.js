@@ -1,65 +1,65 @@
 const https = require('https');
 
 exports.handler = async (event) => {
-  se (event.httpMethod === 'OPTIONS') {
-    retornar {
-      código de status: 200,
-      cabeçalhos: {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
-      corpo: ''
+      body: ''
     };
   }
 
-  se (evento.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Método não permitido' };
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  se (!apiKey) {
-    retornar {
-      Código de status: 500,
-      cabeçalhos: { 'Access-Control-Allow-Origin': '*' },
-      corpo: JSON.stringify({ erro: 'ANTHROPIC_API_KEY não configurada' })
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' })
     };
   }
 
-  retornar nova Promise((resolve) => {
+  return new Promise((resolve) => {
     const bodyData = event.body;
-    const opções = {
+    const options = {
       hostname: 'api.anthropic.com',
-      caminho: '/v1/mensagens',
-      método: 'POST',
-      cabeçalhos: {
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'versão antrópica': '2023-06-01',
+        'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(bodyData)
       }
     };
 
     const req = https.request(options, (res) => {
-      seja data = '';
+      let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        resolver({
-          código de status: 200,
-          cabeçalhos: {
+        resolve({
+          statusCode: 200,
+          headers: {
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json'
           },
-          corpo: dados
+          body: data
         });
       });
     });
 
     req.on('error', (err) => {
-      resolver({
-        Código de status: 500,
-        cabeçalhos: { 'Access-Control-Allow-Origin': '*' },
-        corpo: JSON.stringify({ erro: err.message })
+      resolve({
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: err.message })
       });
     });
 
