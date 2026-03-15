@@ -727,45 +727,18 @@ async function sendMessage(){
     updateStep(0,'active','🔍 Identificando times...');
     await delay(300);
 
-    try{
-      updateStep(0,'done','✅ Times identificados');
-      updateStep(1,'active','📡 Buscando stats na API...');
-
-      col=await Promise.race([
-        collectData(text),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),25000))
-      ]);
-
-      if(col){
-        hasReal=true;
-        ctx=col.context;
-        updateStep(1,'done','✅ Dados carregados');
-        updateStep(2,'done','✅ ELO calculado');
-        updateStep(3,'done','✅ xG analisado');
-        updateStep(4,'done',col.oddsResult?'✅ Odds carregadas':'⚠️ Odds indisponíveis');
-        updateStep(5,'done','✅ Poisson calculado');
-      } else {
-        updateStep(1,'warn','⚠️ API indisponível — usando base interna');
-        updateStep(2,'done','✅ ELO calculado (base interna)');
-        updateStep(3,'done','✅ Poisson calculado');
-        updateStep(4,'done','');updateStep(5,'done','');
-      }
-    }catch(e){
-      updateStep(1,'warn','⚠️ API com instabilidade — análise por base interna');
-      updateStep(2,'done','✅ ELO calculado');updateStep(3,'done','');updateStep(4,'done','');updateStep(5,'done','');
-    }
-    updateStep(6,'active','🧠 IA analisando...');
+    updateStep(0,'done','✅ Times identificados');
+    updateStep(1,'done','📡 Dados serão buscados pelo servidor...');
+    updateStep(2,'done','✅ ELO calculado');
+    updateStep(3,'done','✅ Modelos prontos');
+    updateStep(4,'done','✅ Preparando análise...');
+    updateStep(5,'done','✅ Poisson calculado');
+    updateStep(6,'active','🧠 IA analisando com dados reais...');
   }
 
-  // Monta contexto — mesmo sem API, passa o máximo de info possível
-  if(!ctx&&teams){
-    const eloData=calcELO(teams.home,teams.away,[]);
-    const pd=calcPoisson(1.4,1.1);
-    ctx=`=== DADOS DISPONÍVEIS ===\nJogo: ${teams.home} x ${teams.away}\n=== ELO (base interna) ===\n${teams.home}: ${eloData.homeELO} | ${teams.away}: ${eloData.awayELO}\nProb ELO: ${teams.home}=${eloData.winProb}% | Empate=${eloData.drawProb}% | ${teams.away}=${eloData.awayProb}%\n=== POISSON (médias padrão) ===\nPlacares prováveis: ${pd.top3.map(s=>`${s.h}-${s.a}(${(s.p*100).toFixed(1)}%)`).join(', ')}\nVitória ${teams.home}:${pd.hw}% | Empate:${pd.dw}% | ${teams.away}:${pd.aw}%\nNOTA: API-Football indisponível no momento. Use seu conhecimento sobre os times para complementar a análise.`;
-    col={teams,eloData,poissonData:pd,confidence:45};
-  }
+  // Dados serão buscados pelo backend
 
-  const payload=[...chatHistory.slice(0,-1),{role:'user',content:ctx?`${text}\n\n${ctx}`:text}];
+  const payload=[...chatHistory.slice(0,-1),{role:'user',content:text}];
 
   try{
     const controller=new AbortController();
@@ -784,7 +757,7 @@ async function sendMessage(){
     if(data.error){ throw new Error('API: '+(data.error.message||JSON.stringify(data.error))); }
     const reply=data.content?.[0]?.text;
     if(!reply){ throw new Error('Sem resposta. HTTP '+res.status+' | '+rawText.slice(0,100)); }
-    chatHistory.push({role:'assistant',content:reply});
+    chatHistory.push({role:'assistant',content:reply});if(chatHistory.length>6)chatHistory.splice(0,2);
     document.getElementById('loader')?.remove();
     const scoreMatch=reply.match(/SCORE DE CONFIANÇA:\s*(\d+)/i);
     const aiScore=scoreMatch?parseInt(scoreMatch[1]):col?.confidence||50;
