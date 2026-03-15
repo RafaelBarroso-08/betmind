@@ -773,7 +773,7 @@ async function sendMessage(){
     const res=await fetch('/.netlify/functions/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-3-5-haiku-20241022',max_tokens:1400,system:SYSTEM_PROMPT,messages:payload}),
+      body:JSON.stringify({model:'claude-3-5-haiku-20241022',max_tokens:1024,system:SYSTEM_PROMPT,messages:payload}),
       signal:controller.signal
     });
     clearTimeout(timeout);
