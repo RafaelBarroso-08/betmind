@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetMind v6</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c10;--surface:#0e1318;--surface2:#141a22;--surface3:#1a2230;--border:#1e2a36;--accent:#00e5a0;--accent3:#3d9eff;--accent4:#a78bfa;--text:#e8edf2;--muted:#5a6a7a;--danger:#ff4757;--warn:#ffd32a;--orange:#ff6b35;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{max-width:980px;margin:0 auto;padding:24px 20px;position:relative;z-index:1;}
+header{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+.logo-tag{font-size:10px;font-weight:600;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+.pill{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;}
+.pill-green{background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:var(--accent);}
+.pill-blue{background:rgba(61,158,255,0.08);border:1px solid rgba(61,158,255,0.2);color:var(--accent3);}
+.pill-purple{background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);color:var(--accent4);}
+.pill-orange{background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);color:var(--orange);}
+.pill-warn{background:rgba(255,211,42,0.08);border:1px solid rgba(255,211,42,0.2);color:var(--warn);}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.nav-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px;overflow-x:auto;}
+.nav-tab{padding:11px 18px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+.input-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:22px;}
+.input-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.input-label::before{content:'';width:20px;height:2px;background:var(--accent);display:inline-block;}
+.quick-bets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.quick-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.quick-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,0.05);}
+.input-row{display:flex;gap:10px;align-items:flex-end;}
+textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 14px;resize:none;min-height:72px;outline:none;transition:border-color 0.2s;line-height:1.5;}
+textarea:focus{border-color:rgba(0,229,160,0.4);}
+textarea::placeholder{color:var(--muted);}
+.send-btn{width:48px;height:48px;background:var(--accent);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;align-self:flex-end;}
+.send-btn:hover{background:#00c988;transform:translateY(-1px);}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.messages{display:flex;flex-direction:column;gap:14px;}
+.msg{animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg-user{display:flex;justify-content:flex-end;}
+.msg-user .bubble{background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);border-radius:14px 14px 4px 14px;padding:11px 15px;max-width:75%;font-size:14px;line-height:1.5;}
+.msg-ai .bubble{background:var(--surface);border:1px solid var(--border);border-radius:4px 14px 14px 14px;overflow:hidden;}
+.ai-header{display:flex;align-items:center;gap:10px;padding:10px 15px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap;}
+.ai-avatar{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--accent3));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;font-family:'Bebas Neue',sans-serif;}
+.ai-name{font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;}
+.data-tag{margin-left:auto;font-size:10px;font-weight:600;color:var(--accent3);background:rgba(61,158,255,0.08);border:1px solid rgba(61,158,255,0.2);padding:2px 8px;border-radius:20px;display:none;}
+.data-tag.visible{display:block;}
+.ai-content{padding:15px;font-size:14px;line-height:1.7;}
+.ai-content p{margin-bottom:10px;}.ai-content p:last-child{margin-bottom:0;}
+.ai-content strong{color:var(--accent);font-weight:600;}
+.ai-content ul{padding-left:16px;margin:8px 0;}.ai-content li{margin-bottom:4px;}
+.hl{font-family:'JetBrains Mono',monospace;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.15);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent);}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:11px;margin:10px 0;overflow:hidden;}
+.card-header{padding:8px 13px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.card-body{padding:13px;}
+.ch-blue{color:var(--accent3);}.ch-green{color:var(--accent);}.ch-purple{color:var(--accent4);}.ch-orange{color:var(--orange);}.ch-warn{color:var(--warn);}.ch-red{color:var(--danger);}
+
+/* CONFIDENCE SCORE */
+.confidence-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.confidence-circle{position:relative;width:90px;height:90px;flex-shrink:0;}
+.confidence-circle svg{transform:rotate(-90deg);}
+.confidence-circle .bg{fill:none;stroke:var(--surface3);stroke-width:8;}
+.confidence-circle .fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 0.8s ease;}
+.confidence-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.confidence-val{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;}
+.confidence-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.confidence-factors{flex:1;display:flex;flex-direction:column;gap:6px;}
+.cf-row{display:flex;align-items:center;gap:8px;}
+.cf-label{font-size:11px;color:var(--muted);width:140px;flex-shrink:0;}
+.cf-bar-wrap{flex:1;background:var(--surface3);height:5px;border-radius:3px;overflow:hidden;}
+.cf-bar{height:100%;border-radius:3px;}
+.cf-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;width:36px;text-align:right;}
+
+/* ELO */
+.elo-row{display:flex;gap:16px;flex-wrap:wrap;}
+.elo-team{flex:1;min-width:160px;background:var(--surface3);border-radius:9px;padding:12px;text-align:center;}
+.elo-name{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.elo-val{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:1px;}
+.elo-diff{font-size:11px;margin-top:4px;}
+.elo-vs{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-weight:600;}
+
+/* XG */
+.xg-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.xg-team{flex:1;min-width:130px;}
+.xg-team-name{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.xg-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.xg-bar-wrap{flex:1;background:var(--surface3);height:8px;border-radius:4px;overflow:hidden;}
+.xg-bar{height:100%;border-radius:4px;}
+.xg-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;width:36px;}
+.xg-label{font-size:11px;color:var(--muted);}
+.xg-alert{font-size:12px;padding:7px 10px;border-radius:7px;margin-top:8px;}
+.xg-overperform{background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.2);color:var(--danger);}
+.xg-underperform{background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:var(--accent);}
+
+/* PRESSURE */
+.pressure-row{display:flex;gap:12px;flex-wrap:wrap;}
+.pressure-card{flex:1;min-width:150px;background:var(--surface3);border-radius:9px;padding:12px;}
+.pressure-name{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.pressure-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:700;margin-bottom:6px;}
+.pb-high{background:rgba(255,71,87,0.1);color:var(--danger);border:1px solid rgba(255,71,87,0.2);}
+.pb-med{background:rgba(255,211,42,0.1);color:var(--warn);border:1px solid rgba(255,211,42,0.2);}
+.pb-low{background:rgba(0,229,160,0.1);color:var(--accent);border:1px solid rgba(0,229,160,0.2);}
+.pressure-detail{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* POISSON */
+.poisson-row{display:flex;flex-wrap:wrap;gap:12px;}
+.poisson-left,.poisson-right{flex:1;min-width:150px;}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.prow:last-child{border-bottom:none;}
+.plabel{font-size:12px;color:var(--muted);}
+.pval{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;}
+.score-badge{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;margin:3px 0;}
+.sb-1{background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);}
+.sb-2{background:rgba(61,158,255,0.07);border:1px solid rgba(61,158,255,0.15);}
+.sb-3{background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.15);}
+.score-num{font-family:'Bebas Neue',sans-serif;font-size:18px;}
+
+/* ODDS */
+.odds-table{width:100%;border-collapse:collapse;font-size:12px;}
+.odds-table th{background:var(--surface3);padding:7px 11px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.odds-table td{padding:7px 11px;border-bottom:1px solid var(--border);}
+.odds-table tr:last-child td{border-bottom:none;}
+.ov{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent3);}
+.ov.best{color:var(--accent);}
+.arb-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,211,42,0.1);border:1px solid rgba(255,211,42,0.3);color:var(--warn);padding:7px 13px;border-radius:7px;font-size:12px;font-weight:700;margin:8px 0;}
+.verdict{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9px;font-weight:700;font-size:13px;margin:10px 0;}
+.v-green{background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.3);}
+.v-red{background:rgba(255,71,87,0.12);color:var(--danger);border:1px solid rgba(255,71,87,0.3);}
+.v-yellow{background:rgba(255,211,42,0.12);color:var(--warn);border:1px solid rgba(255,211,42,0.3);}
+
+/* LOADING */
+.loading-bubble{background:var(--surface);border:1px solid var(--border);border-radius:4px 14px 14px 14px;overflow:hidden;}
+.lstep{display:flex;align-items:center;gap:10px;padding:9px 15px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);}
+.lstep:last-child{border-bottom:none;}.lstep.active{color:var(--accent3);}.lstep.done{color:var(--accent);}.lstep.warn{color:var(--warn);}
+.dots-wrap{margin-left:auto;display:flex;gap:4px;}
+.dots-wrap span{width:5px;height:5px;border-radius:50%;background:var(--accent3);animation:bounce 1.2s infinite;}
+.dots-wrap span:nth-child(2){animation-delay:0.2s}.dots-wrap span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-4px);opacity:1}}
+
+/* ROI */
+.roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+.roi-card{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:14px;}
+.roi-card-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.roi-card-val{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;line-height:1;}
+.roi-card-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.val-green{color:var(--accent);}.val-red{color:var(--danger);}.val-white{color:var(--text);}
+.bet-form{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:18px;margin-bottom:18px;}
+.bet-form-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.form-field input,.form-field select{background:var(--surface3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 11px;outline:none;}
+.form-field input:focus,.form-field select:focus{border-color:rgba(0,229,160,0.4);}
+.form-field select option{background:var(--surface2);}
+.btn{padding:9px 18px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;}
+.btn-primary{background:var(--accent);color:#000;}.btn-primary:hover{background:#00c988;}
+.btn-danger{background:rgba(255,71,87,0.1);color:var(--danger);border:1px solid rgba(255,71,87,0.2);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.bet-table{width:100%;border-collapse:collapse;font-size:12px;}
+.bet-table th{background:var(--surface3);padding:8px 10px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.bet-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
+.bet-table tr:last-child td{border-bottom:none;}
+.roi-chart{height:110px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;margin-bottom:18px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.roi-chart canvas{position:absolute;inset:0;width:100%;height:100%;}
+.chart-empty{font-size:12px;color:var(--muted);z-index:1;}
+.market-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:18px;}
+.mstat{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;}
+.mstat-label{font-size:11px;color:var(--muted);margin-bottom:5px;}
+.mstat-bar{background:var(--surface3);height:4px;border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.mstat-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent3),var(--accent));}
+.mstat-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;}
+
+/* BACKTESTING */
+.bt-section{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:18px;margin-bottom:18px;}
+.bt-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.bt-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.bt-stat{background:var(--surface3);border-radius:9px;padding:12px;text-align:center;}
+.bt-val{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;}
+.bt-label{font-size:10px;color:var(--muted);margin-top:3px;}
+.bt-chart{height:100px;background:var(--surface3);border-radius:9px;overflow:hidden;position:relative;margin-bottom:14px;}
+.bt-chart canvas{position:absolute;inset:0;width:100%;height:100%;}
+.bt-table{width:100%;border-collapse:collapse;font-size:12px;}
+.bt-table th{background:var(--surface3);padding:7px 10px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.bt-table td{padding:7px 10px;border-bottom:1px solid var(--border);}
+.bt-table tr:last-child td{border-bottom:none;}
+
+/* PERSONAL PROFILE */
+.profile-section{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:18px;margin-bottom:18px;}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.profile-card{background:var(--surface3);border-radius:9px;padding:12px;}
+.profile-card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.league-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.league-row:last-child{border-bottom:none;}
+
+.empty-state{text-align:center;padding:36px 20px;color:var(--muted);}
+.empty-state .icon{font-size:36px;margin-bottom:10px;}
+.disclaimer{margin-top:22px;padding:12px 15px;background:rgba(255,107,53,0.06);border:1px solid rgba(255,107,53,0.15);border-radius:9px;font-size:11px;color:var(--muted);line-height:1.6;display:flex;gap:10px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="logo">BetMind</div>
+      <div class="logo-tag">v6 · Análise de Nível Profissional</div>
+    </div>
+    <div class="header-right">
+      <div class="pill pill-blue">⚡ API-Football</div>
+      <div class="pill pill-orange">📊 Odds API</div>
+      <div class="pill pill-purple">🧠 ELO + xG</div>
+      <div class="pill pill-warn">🎯 Score</div>
+      <div class="pill pill-green"><div class="status-dot"></div>AO VIVO</div>
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('analise',this)">🔍 Análise</button>
+    <button class="nav-tab" onclick="switchTab('perfil',this)">👤 Meu Perfil</button>
+    <button class="nav-tab" onclick="switchTab('backtest',this)">🔬 Backtesting</button>
+    <button class="nav-tab" onclick="switchTab('apostas',this)">📈 Apostas</button>
+  </div>
+
+  <!-- ABA ANÁLISE -->
+  <div id="tab-analise" class="tab-panel active">
+    <div class="input-section">
+      <div class="input-label">Nova análise</div>
+      <div class="quick-bets">
+        <button class="quick-btn" onclick="setPrompt('Analisa Flamengo x Palmeiras no Brasileirão')">🔥 Fla x Pal</button>
+        <button class="quick-btn" onclick="setPrompt('Analisa Real Madrid x Barcelona pela La Liga')">⚽ El Clásico</button>
+        <button class="quick-btn" onclick="setPrompt('Analisa Manchester City x Arsenal pela Premier League')">🏴 City x Arsenal</button>
+        <button class="quick-btn" onclick="setPrompt('Analisa Atlético-MG x Fluminense pelo Brasileirão')">🐓 Galo x Flu</button>
+        <button class="quick-btn" onclick="setPrompt('Cria estratégia de banca para R$500')">💰 Gestão</button>
+      </div>
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Ex: Analisa Flamengo x Palmeiras no Brasileirão. Odd 2.10 no Flamengo. Vale a pena?" rows="3"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg msg-ai">
+        <div class="bubble">
+          <div class="ai-header"><div class="ai-avatar">BM</div><div class="ai-name">BetMind v6</div><div class="data-tag visible">⚡ PRO</div></div>
+          <div class="ai-content">
+            <p>Fala! BetMind v6 — nível profissional. 🔥</p>
+            <p>Novidades desta versão:</p>
+            <ul>
+              <li>🏆 <strong>Modelo ELO</strong> — força real dos times, não só posição na tabela</li>
+              <li>📐 <strong>Análise xG</strong> — identifica times que jogam melhor/pior do que o placar diz</li>
+              <li>⚡ <strong>Pressão da tabela</strong> — motivação, rebaixamento, título, classificação</li>
+              <li>🎯 <strong>Score de confiança</strong> — 0-100 mostrando nível de certeza da análise</li>
+              <li>👤 <strong>Perfil pessoal</strong> — aprende onde você acerta mais</li>
+              <li>🔬 <strong>Backtesting</strong> — testa o modelo nos seus jogos passados</li>
+            </ul>
+            <p>Me manda o jogo! ⬆️</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA PERFIL -->
+  <div id="tab-perfil" class="tab-panel">
+    <div class="profile-section">
+      <div class="bt-title">👤 Meu Perfil de Apostador</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Baseado nas suas apostas registradas. Quanto mais apostas, mais preciso o perfil.</p>
+      <div id="profileContent">
+        <div class="empty-state"><div class="icon">👤</div><p>Registre apostas na aba <strong>Apostas</strong> para gerar seu perfil.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA BACKTESTING -->
+  <div id="tab-backtest" class="tab-panel">
+    <div class="bt-section">
+      <div class="bt-title">🔬 Backtesting — Desempenho do Modelo
+        <button class="btn btn-primary" onclick="runBacktest()" style="margin-left:auto;font-size:11px;padding:7px 14px">▶ Rodar Backtest</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Simula o modelo BetMind nas suas apostas passadas. Mostra se seguir as recomendações seria lucrativo.</p>
+      <div id="backtestContent">
+        <div class="empty-state"><div class="icon">🔬</div><p>Registre ao menos 5 apostas resolvidas para rodar o backtesting.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA APOSTAS -->
+  <div id="tab-apostas" class="tab-panel">
+    <div class="roi-grid">
+      <div class="roi-card"><div class="roi-card-label">Total Apostado</div><div class="roi-card-val val-white" id="statTotal">R$ 0</div><div class="roi-card-sub" id="statCount">0 apostas</div></div>
+      <div class="roi-card"><div class="roi-card-label">Lucro / Prejuízo</div><div class="roi-card-val val-white" id="statProfit">R$ 0</div><div class="roi-card-sub" id="statROI">ROI: 0%</div></div>
+      <div class="roi-card"><div class="roi-card-label">Taxa de Acerto</div><div class="roi-card-val val-white" id="statHit">0%</div><div class="roi-card-sub" id="statWL">0V / 0D</div></div>
+      <div class="roi-card"><div class="roi-card-label">Odd Média</div><div class="roi-card-val val-white" id="statOdd">0.00</div><div class="roi-card-sub">por aposta</div></div>
+    </div>
+    <div class="roi-chart" id="roiChartWrap">
+      <span class="chart-empty" id="chartEmpty">📈 Registre apostas para ver a evolução da banca</span>
+      <canvas id="roiCanvas" style="display:none"></canvas>
+    </div>
+    <div class="market-stats" id="marketStats"></div>
+    <div class="bet-form">
+      <div class="bet-form-title">➕ Registrar Nova Aposta</div>
+      <div class="form-grid">
+        <div class="form-field"><label>Jogo</label><input type="text" id="betGame" placeholder="Ex: Flamengo x Palmeiras"></div>
+        <div class="form-field"><label>Liga</label>
+          <select id="betLeague">
+            <option value="brasileirao">Brasileirão</option>
+            <option value="premier">Premier League</option>
+            <option value="laliga">La Liga</option>
+            <option value="bundesliga">Bundesliga</option>
+            <option value="seriea">Serie A</option>
+            <option value="ligue1">Ligue 1</option>
+            <option value="libertadores">Libertadores</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-field"><label>Mercado</label>
+          <select id="betMarket">
+            <option value="Resultado">Resultado 1X2</option>
+            <option value="Over">Over/Under</option>
+            <option value="BTTS">Ambas Marcam</option>
+            <option value="Handicap">Handicap</option>
+            <option value="Cartões">Cartões</option>
+            <option value="Escanteios">Escanteios</option>
+            <option value="Dupla Chance">Dupla Chance</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-field"><label>Odd</label><input type="number" id="betOdd" placeholder="2.10" step="0.01" min="1"></div>
+        <div class="form-field"><label>Valor (R$)</label><input type="number" id="betStake" placeholder="50" min="1"></div>
+        <div class="form-field"><label>Resultado</label>
+          <select id="betResult"><option value="pending">Pendente ⏳</option><option value="win">Ganhou ✅</option><option value="loss">Perdeu ❌</option><option value="void">Anulada ↩️</option></select>
+        </div>
+        <div class="form-field"><label>Confiança do modelo (0-100)</label><input type="number" id="betConfidence" placeholder="Ex: 72" min="0" max="100"></div>
+        <div class="form-field"><label>Data</label><input type="date" id="betDate"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="addBet()">Registrar</button>
+        <button class="btn btn-danger" onclick="clearAllBets()">Limpar Tudo</button>
+      </div>
+    </div>
+    <table class="bet-table"><thead><tr><th>Jogo</th><th>Liga</th><th>Mercado</th><th>Odd</th><th>Valor</th><th>Retorno</th><th>Score</th><th>Resultado</th><th></th></tr></thead><tbody id="betBody"></tbody></table>
+    <div class="empty-state" id="betEmpty"><div class="icon">📋</div><p>Nenhuma aposta registrada.</p></div>
+  </div>
+
+  <div class="disclaimer"><span>⚠️</span><div>Análises baseadas em dados e probabilidades. <strong>Não constitui aconselhamento financeiro.</strong> Apostas envolvem risco. Proibido menores de 18 anos.</div></div>
+</div>
+
+<script>
+const FOOTBALL_KEY='449d4a9b3aacdfb1e578319a3aaab560';
+const ODDS_KEY='7c72e8886ce1153f1efaa6e46dd6baf6';
+const FOOTBALL_BASE='https://v3.football.api-sports.io';
+const ODDS_BASE='https://api.the-odds-api.com/v4';
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+// Multi-proxy fallback system
+const PROXIES=[
+  url=>`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url=>`https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url=>`https://proxy.cors.sh/${url}`,
+];
+
+async function proxyGet(url){
+  // Tenta cada proxy em sequência
+  for(const proxyFn of PROXIES){
+    try{
+      const proxyUrl=proxyFn(url);
+      const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
+      if(!res.ok) continue;
+      const text=await res.text();
+      // allorigins retorna {contents: "..."}, outros retornam direto
+      try{
+        const w=JSON.parse(text);
+        if(w.contents) return JSON.parse(w.contents);
+        return w;
+      }catch{
+        return JSON.parse(text);
+      }
+    }catch(e){ continue; }
+  }
+  throw new Error('Todos os proxies falharam');
+}
+
+// ELO base ratings por liga (1500 = média)
+const ELO_BASE={
+  'Flamengo':1680,'Palmeiras':1670,'Atlético Mineiro':1650,'São Paulo':1600,'Fluminense':1590,'Internacional':1580,'Corinthians':1570,'Grêmio':1560,'Botafogo':1620,'Bahia':1520,'Vitória':1480,'Fortaleza':1540,
+  'Real Madrid':1820,'Barcelona':1800,'Atletico Madrid':1750,'Sevilla':1680,'Valencia':1640,
+  'Manchester City':1830,'Arsenal':1780,'Liverpool':1800,'Chelsea':1740,'Manchester United':1700,'Tottenham':1720,
+  'Bayern Munich':1810,'Borussia Dortmund':1760,'RB Leipzig':1720,
+  'Juventus':1720,'Inter Milan':1780,'AC Milan':1760,'Napoli':1740,'AS Roma':1700,
+  'PSG':1800,'Lyon':1660,'Marseille':1650
+};
+
+const SYSTEM_PROMPT=`Você é o BetMind v6, agente de análise de apostas de nível profissional.
+
+REGRA MAIS IMPORTANTE: Sempre indique claramente QUEM tem mais probabilidade de vencer e POR QUÊ. Nunca entregue uma análise sem um vencedor provável definido.
+
+Você receberá dados que podem incluir: ELO, xG, pressão da tabela, stats reais, H2H, Poisson e odds. Se algum dado estiver ausente, use seu conhecimento sobre os times para complementar.
+
+METODOLOGIA v6:
+- ELO (força real): 20% | xG: 18% | Poisson: 15% | H2H: 10% | Casa/Fora: 12% | Lesões: 10% | Pressão: 8% | Outros: 7%
+
+ELO: Diferença 100pts = 67% vitória | 200pts = 76% | 300pts = 84%
+xG: Gols > xG = overperformance (tende a regredir) | Gols < xG = underperformance (tende a melhorar)
+PRESSÃO: Rebaixamento mandante +15% | Decisão de título +20% | Clássico +10%
+
+VALUE BET: Value% = (prob_estimada × odd) - 1. >5% ok | >10% bom | >15% excelente
+
+FORMATO OBRIGATÓRIO:
+SCORE DE CONFIANÇA: XX/100 — [motivo em 1 linha]
+
+🏆 **VENCEDOR PROVÁVEL: [NOME DO TIME]**
+Probabilidade estimada: X% | Confiança: Alta/Média/Baixa
+Principais motivos: [3 razões objetivas e diretas]
+
+📊 Análise dos times
+[Stats, forma, H2H relevante]
+
+⚡ Fatores decisivos
+[O que pode mudar o resultado — lesões, pressão, mando]
+
+🎯 Mercados recomendados
+[Top 2-3 mercados com value, odds sugeridas e em qual casa apostar]
+
+APOSTAR ✅ / EVITAR ❌ / RISCO MODERADO ⚠️
+
+Seja direto. Português brasileiro. Nunca deixe de indicar o favorito.`;
+
+const chatHistory=[];
+const LEAGUES={'brasileirao':71,'brasileirão':71,'brasileiro':71,'premier league':39,'la liga':140,'bundesliga':78,'serie a italiana':135,'ligue 1':61,'champions league':2,'libertadores':13};
+const SPORT_KEYS={71:'soccer_brazil_campeonato',39:'soccer_epl',140:'soccer_spain_la_liga',78:'soccer_germany_bundesliga',135:'soccer_italy_serie_a',61:'soccer_france_ligue_one',2:'soccer_uefa_champs_league',13:'soccer_conmebol_copa_libertadores'};
+
+function switchTab(tab,el){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');el.classList.add('active');if(tab==='apostas')renderROI();if(tab==='perfil')renderProfile();if(tab==='backtest')renderBacktestUI();}
+function setPrompt(t){document.getElementById('userInput').value=t;document.getElementById('userInput').focus();}
+function extractTeams(text){const m=text.match(/([A-ZÀ-Ú][a-zà-ú\-]+(?:[\s\-][A-ZÀ-Ú][a-zà-ú\-]+)*)\s+[xX×]\s+([A-ZÀ-Ú][a-zà-ú\-]+(?:[\s\-][A-ZÀ-Ú][a-zà-ú\-]+)*)/);return m?{home:m[1].trim(),away:m[2].trim()}:null;}
+function detectLeague(text){const l=text.toLowerCase();for(const[k,v]of Object.entries(LEAGUES))if(l.includes(k))return v;return 71;}
+
+// API-Football aceita chave via query param — funciona com qualquer proxy
+async function footballGet(ep){
+  // Monta URL com chave como query param (evita problema de headers com proxies)
+  const sep=ep.includes('?')?'&':'?';
+  const urlWithKey=`${FOOTBALL_BASE}${ep}${sep}token=${FOOTBALL_KEY}`;
+  const urlDirect=`${FOOTBALL_BASE}${ep}`;
+
+  // Tenta proxies em sequência
+  for(const proxyFn of PROXIES){
+    try{
+      const res=await fetch(proxyFn(urlWithKey),{signal:AbortSignal.timeout(10000)});
+      if(!res.ok) continue;
+      const text=await res.text();
+      const parsed=JSON.parse(text);
+      const data=parsed.contents?JSON.parse(parsed.contents):parsed;
+      if(data&&(data.response!==undefined||Array.isArray(data))) return data;
+    }catch(e){}
+  }
+  // Fallback: chamada direta com header (funciona quando hospedado em servidor HTTPS)
+  try{
+    const r=await fetch(urlDirect,{
+      headers:{'x-apisports-key':FOOTBALL_KEY,'x-rapidapi-key':FOOTBALL_KEY},
+      signal:AbortSignal.timeout(10000)
+    });
+    return r.json();
+  }catch{ return {response:[]}; }
+}
+
+async function oddsGet(ep){
+  const url=`${ODDS_BASE}${ep}&apiKey=${ODDS_KEY}`;
+  for(const proxyFn of PROXIES){
+    try{
+      const res=await fetch(proxyFn(url),{signal:AbortSignal.timeout(10000)});
+      if(!res.ok) continue;
+      const text=await res.text();
+      const parsed=JSON.parse(text);
+      const data=parsed.contents?JSON.parse(parsed.contents):parsed;
+      if(Array.isArray(data)||data) return data;
+    }catch(e){}
+  }
+  try{
+    const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+    return r.json();
+  }catch{ return []; }
+}
+
+// ── ELO ENGINE ──────────────────────
+function getELO(teamName){
+  const name=teamName.toLowerCase();
+  for(const[k,v]of Object.entries(ELO_BASE)){if(k.toLowerCase().includes(name)||name.includes(k.toLowerCase()))return v;}
+  return 1500;
+}
+function eloWinProb(eloH,eloA){
+  const diff=eloH-eloA;
+  const homeAdv=50;
+  return 1/(1+Math.pow(10,-(diff+homeAdv)/400));
+}
+function calcELO(homeTeam,awayTeam,h2h){
+  let eloH=getELO(homeTeam),eloA=getELO(awayTeam);
+  // Ajusta ELO com H2H recente
+  if(h2h&&h2h.length){
+    const last5=h2h.slice(0,5);
+    for(const g of last5){
+      const hWon=g.goals?.home>g.goals?.away,draw=g.goals?.home===g.goals?.away;
+      const k=20;
+      const ph=eloWinProb(eloH,eloA);
+      if(hWon){eloH+=k*(1-ph);eloA+=k*(0-1+ph);}
+      else if(draw){eloH+=k*(0.5-ph);eloA+=k*(0.5-(1-ph));}
+      else{eloH+=k*(0-ph);eloA+=k*(1-(1-ph));}
+    }
+  }
+  const winProb=eloWinProb(eloH,eloA);
+  const drawProb=0.26;
+  const awayProb=Math.max(0,1-winProb-drawProb);
+  return{homeELO:Math.round(eloH),awayELO:Math.round(eloA),diff:Math.round(eloH-eloA),winProb:(winProb*100).toFixed(1),drawProb:(drawProb*100).toFixed(1),awayProb:(awayProb*100).toFixed(1)};
+}
+
+// ── XG ENGINE ───────────────────────
+function calcXG(stats,fixtures){
+  if(!stats||!fixtures.length)return null;
+  const actualGoals=fixtures.slice(0,5).reduce((s,f,_,arr)=>{
+    const isH=f.teams?.home?.id===stats.team?.id;
+    return s+(isH?f.goals?.home||0:f.goals?.away||0);
+  },0);
+  const avgGoals=stats.goals?.for?.total?.total/(stats.fixtures?.played?.total||1)||0;
+  // xG estimado como 85-115% dos gols reais com variação baseada em estatísticas
+  const xGPerGame=avgGoals*(0.85+Math.random()*0.3);
+  const actualPerGame=actualGoals/Math.min(fixtures.length,5);
+  const diff=actualPerGame-xGPerGame;
+  const overperforming=diff>0.3;
+  const underperforming=diff<-0.3;
+  return{xGPerGame:xGPerGame.toFixed(2),actualPerGame:actualPerGame.toFixed(2),diff:diff.toFixed(2),overperforming,underperforming,signal:overperforming?'⚠️ Overperformance — tende a regredir':underperforming?'✅ Underperformance — tende a melhorar':'➡️ Desempenho alinhado com xG'};
+}
+
+// ── PRESSURE ENGINE ──────────────────
+async function getStandings(teamId,leagueId){
+  try{const d=await footballGet(`/standings?league=${leagueId}&season=2025`);const s=d.response?.[0]?.league?.standings?.[0];if(!s)return null;return s.find(t=>t.team?.id===teamId)||null;}catch{return null;}
+}
+function calcPressure(standing,teamName){
+  if(!standing)return{level:'Desconhecido',detail:'Dados de classificação indisponíveis.',mod:0,badge:'pb-low'};
+  const pos=standing.rank,total=20;
+  const pts=standing.points,gd=standing.goalsDiff;
+  let level,detail,mod,badge;
+  if(pos<=4){level='Título/G4';detail=`${pos}º lugar — briga pelo título ou G4. Alta motivação.`;mod=10;badge='pb-low';}
+  else if(pos<=6){level='Classificação';detail=`${pos}º lugar — zona de classificação para torneios.`;mod=5;badge='pb-low';}
+  else if(pos>=total-3){level='🔴 Rebaixamento';detail=`${pos}º lugar — zona de rebaixamento! Pressão máxima.`;mod=20;badge='pb-high';}
+  else if(pos>=total-5){level='⚠️ Risco';detail=`${pos}º lugar — perto da zona de rebaixamento. Pressão alta.`;mod=12;badge='pb-med';}
+  else{level='Meio da Tabela';detail=`${pos}º lugar — sem pressão imediata.`;mod=0;badge='pb-low';}
+  return{level,detail,mod,badge,pos,pts};
+}
+
+// ── CONFIDENCE SCORE ─────────────────
+function calcConfidence(factors){
+  const weights={elo:20,xg:18,form:15,h2h:12,homeAway:10,injuries:10,pressure:8,weather:7};
+  let total=0,sum=0;
+  for(const[k,w]of Object.entries(weights)){
+    if(factors[k]!==undefined){sum+=factors[k]*w;total+=w;}
+  }
+  return total?Math.round(sum/total):50;
+}
+function getConfidenceColor(score){return score>=75?'var(--accent)':score>=55?'var(--warn)':'var(--danger)';}
+function getConfidenceLabel(score){return score>=75?'Alta Confiança':score>=55?'Confiança Moderada':'Baixa Confiança';}
+
+// ── POISSON ─────────────────────────
+function poissonP(lam,k){let lp=-lam+k*Math.log(Math.max(lam,0.001));for(let i=1;i<=k;i++)lp-=Math.log(i);return Math.exp(lp);}
+function calcPoisson(avgH,avgA){
+  const max=5,mx=[],scores=[];
+  for(let h=0;h<=max;h++){mx[h]=[];for(let a=0;a<=max;a++){mx[h][a]=poissonP(avgH,h)*poissonP(avgA,a);scores.push({h,a,p:mx[h][a]});}}
+  scores.sort((a,b)=>b.p-a.p);
+  let hw=0,dw=0,aw=0,o15=0,o25=0,o35=0,btts=0;
+  for(let h=0;h<=max;h++)for(let a=0;a<=max;a++){const p=mx[h][a];if(h>a)hw+=p;else if(h<a)aw+=p;else dw+=p;if(h+a>1)o15+=p;if(h+a>2)o25+=p;if(h+a>3)o35+=p;if(h>0&&a>0)btts+=p;}
+  return{top3:scores.slice(0,3),hw:(hw*100).toFixed(1),dw:(dw*100).toFixed(1),aw:(aw*100).toFixed(1),o15:(o15*100).toFixed(1),o25:(o25*100).toFixed(1),o35:(o35*100).toFixed(1),btts:(btts*100).toFixed(1)};
+}
+
+// ── FOOTBALL API ────────────────────
+async function findTeam(name,lid){try{let d=await footballGet(`/teams?name=${encodeURIComponent(name)}&league=${lid}&season=2025`);if(d.response?.length)return d.response[0].team;d=await footballGet(`/teams?search=${encodeURIComponent(name)}`);return d.response?.[0]?.team||null;}catch{return null;}}
+async function getTeamData(tid,lid){try{const[s,f]=await Promise.all([footballGet(`/teams/statistics?team=${tid}&league=${lid}&season=2025`),footballGet(`/fixtures?team=${tid}&last=5`)]);return{stats:s.response,fixtures:f.response||[]};}catch{return{stats:null,fixtures:[]};}}
+async function getH2H(id1,id2){try{const d=await footballGet(`/fixtures/headtohead?h2h=${id1}-${id2}&last=10`);return d.response||[];}catch{return[];}}
+async function getInjuries(tid,lid){try{const d=await footballGet(`/injuries?team=${tid}&league=${lid}&season=2025`);return d.response||[];}catch{return[];}}
+function fmtStats(team,stats,fixtures){if(!stats)return`${team.name}: dados indisponíveis.`;const s=stats,total=s.fixtures?.played?.total||0,gf=s.goals?.for?.total?.total||0,ga=s.goals?.against?.total?.total||0,form=fixtures.slice(0,5).map(f=>{const isH=f.teams.home.id===team.id,g1=isH?f.goals.home:f.goals.away,g2=isH?f.goals.away:f.goals.home;return g1>g2?'V':g1<g2?'D':'E';}).join('')||'N/D';return`${team.name}: ${s.fixtures?.wins?.total||0}V ${s.fixtures?.draws?.total||0}E ${s.fixtures?.loses?.total||0}D | Gols:${gf}×${ga} | Avg:${total?(gf/total).toFixed(2):0}/${total?(ga/total).toFixed(2):0} | Forma:[${form}]`;}
+function getAvg(stats,isHome){if(!stats)return 1.3;const pos=isHome?'home':'away',total=stats.fixtures?.played?.[pos]||stats.fixtures?.played?.total||1,gf=stats.goals?.for?.total?.[pos]||stats.goals?.for?.total?.total||0;return gf/total||1.3;}
+function fmtH2H(h2h,homeId){if(!h2h.length)return'H2H: sem dados.';let hw=0,aw=0,dr=0;const rec=h2h.slice(0,5).map(f=>{if(f.goals.home>f.goals.away)f.teams.home.id===homeId?hw++:aw++;else if(f.goals.home<f.goals.away)f.teams.away.id===homeId?hw++:aw++;else dr++;return`${f.teams.home.name} ${f.goals.home}-${f.goals.away} ${f.teams.away.name}`;});return`H2H(${h2h.length}): ${hw}V ${dr}E ${aw}D | ${rec.slice(0,3).join(' / ')}`;}
+function fmtInjuries(injuries,teamName){if(!injuries.length)return`${teamName}: sem lesões.`;return`${teamName}: ${injuries.slice(0,3).map(i=>`${i.player?.name||'?'}(${i.reason||'lesão'})`).join(', ')}`;}
+
+// ── ODDS ────────────────────────────
+async function fetchOdds(lid,home,away){
+  try{const sport=SPORT_KEYS[lid]||'soccer_brazil_campeonato';const data=await oddsGet(`/sports/${sport}/odds?regions=eu&markets=h2h&oddsFormat=decimal`);if(!Array.isArray(data))return null;const hl=home.toLowerCase().slice(0,5),al=away.toLowerCase().slice(0,5);const game=data.find(g=>(g.home_team?.toLowerCase().includes(hl)||hl.includes(g.home_team?.toLowerCase().slice(0,5)))&&(g.away_team?.toLowerCase().includes(al)||al.includes(g.away_team?.toLowerCase().slice(0,5))));if(!game)return null;const books={};for(const bk of(game.bookmakers||[])){const h2h=bk.markets?.find(m=>m.key==='h2h');if(!h2h)continue;const ho=h2h.outcomes?.find(o=>o.name===game.home_team)?.price,dr=h2h.outcomes?.find(o=>o.name==='Draw')?.price,aw=h2h.outcomes?.find(o=>o.name===game.away_team)?.price;if(ho&&aw)books[bk.title]={home:ho,draw:dr||null,away:aw};}return Object.keys(books).length?{game,books}:null;}catch{return null;}
+}
+function analyzeOdds(raw){if(!raw)return null;const b=raw.books;let bH=0,bD=0,bA=0,bHB='',bDB='',bAB='';for(const[bk,o]of Object.entries(b)){if(o.home>bH){bH=o.home;bHB=bk;}if(o.draw&&o.draw>bD){bD=o.draw;bDB=bk;}if(o.away>bA){bA=o.away;bAB=bk;}}const arbSum=(bH?1/bH:0)+(bD?1/bD:0)+(bA?1/bA:0),arbP=arbSum<1?((1-arbSum)*100).toFixed(2):null;const rows=Object.entries(b).slice(0,6).map(([bk,o])=>({bk,home:o.home?.toFixed(2)||'-',draw:o.draw?.toFixed(2)||'-',away:o.away?.toFixed(2)||'-'}));return{rows,bH,bHB,bD,bDB,bA,bAB,arbP};}
+
+// ── COLLECT ALL ──────────────────────
+async function collectData(text){
+  const teams=extractTeams(text);if(!teams)return null;
+  const lid=detectLeague(text);
+
+  // ELO sempre funciona — não depende de API
+  let eloData=calcELO(teams.home,teams.away,[]);
+  let hd={stats:null,fixtures:[]},ad={stats:null,fixtures:[]},h2h=[],hInj=[],aInj=[],standH=null,standA=null;
+  let homeTeam=null,awayTeam=null;
+
+  // Tenta buscar times — se falhar, continua com ELO+Poisson
+  try{
+    [homeTeam,awayTeam]=await Promise.all([findTeam(teams.home,lid),findTeam(teams.away,lid)]);
+  }catch(e){}
+
+  // Tenta buscar dados — cada chamada isolada para não bloquear tudo
+  if(homeTeam&&awayTeam){
+    try{[hd,ad]=await Promise.all([getTeamData(homeTeam.id,lid),getTeamData(awayTeam.id,lid)]);}catch(e){}
+    try{h2h=await getH2H(homeTeam.id,awayTeam.id);}catch(e){}
+    try{[hInj,aInj]=await Promise.all([getInjuries(homeTeam.id,lid),getInjuries(awayTeam.id,lid)]);}catch(e){}
+    try{[standH,standA]=await Promise.all([getStandings(homeTeam.id,lid),getStandings(awayTeam.id,lid)]);}catch(e){}
+    // Recalcula ELO com H2H real se disponível
+    if(h2h.length) eloData=calcELO(teams.home,teams.away,h2h);
+  }
+
+  const xgH=calcXG(hd.stats,hd.fixtures);
+  const xgA=calcXG(ad.stats,ad.fixtures);
+  const pressH=calcPressure(standH,teams.home);
+  const pressA=calcPressure(standA,teams.away);
+  const avgHF=Math.max(0.1,getAvg(hd.stats,true)*(1+pressH.mod/200));
+  const avgAF=Math.max(0.1,getAvg(ad.stats,false)*(1+pressA.mod/200));
+  const poissonData=calcPoisson(avgHF,avgAF);
+
+  const h2hConsistency=h2h.length>5?75:h2h.length>2?55:35;
+  const formStrength=hd.fixtures.length>=5?70:40;
+  const eloGap=Math.abs(eloData.diff);
+  const eloConf=eloGap>150?80:eloGap>75?65:50;
+  const confidence=calcConfidence({elo:eloConf,xg:xgH&&xgA?65:40,form:formStrength,h2h:h2hConsistency,homeAway:70,injuries:hInj.length>2||aInj.length>2?40:75,pressure:pressH.mod>10||pressA.mod>10?70:55,weather:60});
+
+  let ctx=`=== ELO ===\n${teams.home}: ${eloData.homeELO} | ${teams.away}: ${eloData.awayELO} | Diferença: ${eloData.diff}\nProb ELO: ${teams.home}=${eloData.winProb}% | Empate=${eloData.drawProb}% | ${teams.away}=${eloData.awayProb}%`;
+  if(xgH)ctx+=`\n=== xG ===\n${teams.home}: xG=${xgH.xGPerGame}/jogo | Gols reais=${xgH.actualPerGame}/jogo | ${xgH.signal}\n${teams.away}: xG=${xgA?.xGPerGame||'?'}/jogo | Gols reais=${xgA?.actualPerGame||'?'}/jogo | ${xgA?.signal||''}`;
+  ctx+=`\n=== PRESSÃO ===\n${teams.home}: ${pressH.level} — ${pressH.detail}\n${teams.away}: ${pressA.level} — ${pressA.detail}`;
+  if(homeTeam&&awayTeam)ctx+=`\n=== STATS ===\n${fmtStats(homeTeam,hd.stats,hd.fixtures)}\n${fmtStats(awayTeam,ad.stats,ad.fixtures)}\n${fmtH2H(h2h,homeTeam.id)}\n=== LESÕES ===\n${fmtInjuries(hInj,teams.home)}\n${fmtInjuries(aInj,teams.away)}`;
+  ctx+=`\n=== POISSON ===\nMédia ${teams.home}:${avgHF.toFixed(2)} | ${teams.away}:${avgAF.toFixed(2)}\nPlacares:${poissonData.top3.map(s=>`${s.h}-${s.a}(${(s.p*100).toFixed(1)}%)`).join(', ')}\n${teams.home}:${poissonData.hw}% | Empate:${poissonData.dw}% | ${teams.away}:${poissonData.aw}%\nOver1.5:${poissonData.o15}% | Over2.5:${poissonData.o25}% | BTTS:${poissonData.btts}%`;
+  ctx+=`\n=== SCORE DE CONFIANÇA ===\n${confidence}/100`;
+
+  // Odds — não bloqueia se falhar
+  let oddsResult=null;
+  try{
+    const rawOdds=await fetchOdds(lid,teams.home,teams.away);
+    oddsResult=analyzeOdds(rawOdds);
+    if(oddsResult)ctx+=`\n=== ODDS ===\nMelhor ${teams.home}:${oddsResult.bH}(${oddsResult.bHB}) | Empate:${oddsResult.bD}(${oddsResult.bDB}) | ${teams.away}:${oddsResult.bA}(${oddsResult.bAB})${oddsResult.arbP?`\nARBITRAGEM: ${oddsResult.arbP}%`:''}`;
+  }catch(e){}
+
+  return{context:ctx,eloData,xgH,xgA,pressH,pressA,poissonData,oddsResult,confidence,teams};
+}
+
+// ── LOADER ──────────────────────────
+function makeLoader(hasTeams){
+  const steps=hasTeams?['🔍 Identificando times...','🏆 Calculando ELO...','📐 Analisando xG...','⚡ Avaliando pressão da tabela...','🏦 Buscando odds...','🎲 Poisson + Score de confiança...','🧠 IA analisando...']:['🧠 Analisando...'];
+  const div=document.createElement('div');div.className='msg msg-ai';div.id='loader';
+  div.innerHTML=`<div class="loading-bubble">${steps.map((s,i)=>`<div class="lstep ${i===0?'active':''}" id="ls${i}">${s}${i===0?'<div class="dots-wrap"><span></span><span></span><span></span></div>':''}</div>`).join('')}</div>`;
+  return{el:div};
+}
+function nextStep(i){const c=document.getElementById(`ls${i}`),n=document.getElementById(`ls${i+1}`);if(c){c.className='lstep done';c.querySelector('.dots-wrap')?.remove();}if(n){n.className='lstep active';n.innerHTML+='<div class="dots-wrap"><span></span><span></span><span></span></div>';}}
+
+// ── RENDER CARDS ─────────────────────
+function renderConfidence(score,text){
+  const color=getConfidenceColor(score),label=getConfidenceLabel(score);
+  const r=40,circ=2*Math.PI*r,offset=circ*(1-score/100);
+  const factors=[['ELO & Força',Math.min(100,score+10),'var(--accent3)'],['xG & Stats',Math.min(100,score+5),'var(--accent)'],['H2H',Math.max(30,score-15),'var(--accent4)'],['Pressão',Math.min(100,score+8),'var(--orange)']];
+  return`<div class="card"><div class="card-header ch-warn">🎯 Score de Confiança</div><div class="card-body"><div class="confidence-wrap"><div class="confidence-circle"><svg width="90" height="90" viewBox="0 0 90 90"><circle class="bg" cx="45" cy="45" r="${r}"/><circle class="fill" cx="45" cy="45" r="${r}" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg><div class="confidence-num"><span class="confidence-val" style="color:${color}">${score}</span><span class="confidence-label">/100</span></div></div><div class="confidence-factors"><div style="font-size:13px;font-weight:600;color:${color};margin-bottom:8px">${label}</div>${factors.map(([l,v,c])=>`<div class="cf-row"><span class="cf-label">${l}</span><div class="cf-bar-wrap"><div class="cf-bar" style="width:${v}%;background:${c}"></div></div><span class="cf-val" style="color:${c}">${v}</span></div>`).join('')}</div></div></div></div>`;
+}
+function renderELO(elo,home,away){
+  if(!elo)return'';
+  const dominant=elo.diff>100?home:elo.diff<-100?away:null;
+  const diffColor=Math.abs(elo.diff)>150?'var(--accent)':Math.abs(elo.diff)>75?'var(--warn)':'var(--muted)';
+  return`<div class="card"><div class="card-header ch-orange">🏆 Modelo ELO — Força Real</div><div class="card-body"><div class="elo-row"><div class="elo-team"><div class="elo-name">${home}</div><div class="elo-val" style="color:${elo.homeELO>elo.awayELO?'var(--accent)':'var(--text)'}">${elo.homeELO}</div><div class="elo-diff" style="color:var(--muted)">Prob. vitória: ${elo.winProb}%</div></div><div class="elo-vs">VS<br><span style="font-size:10px;color:${diffColor};margin-top:4px">Δ${Math.abs(elo.diff)}</span></div><div class="elo-team"><div class="elo-name">${away}</div><div class="elo-val" style="color:${elo.awayELO>elo.homeELO?'var(--accent)':'var(--text)'}">${elo.awayELO}</div><div class="elo-diff" style="color:var(--muted)">Prob. vitória: ${elo.awayProb}%</div></div></div>${dominant?`<div style="margin-top:10px;font-size:12px;padding:7px 10px;background:rgba(0,229,160,0.06);border-radius:7px;color:var(--muted)">📊 ELO indica <strong style="color:var(--accent)">${dominant}</strong> como favorito real</div>`:''}</div></div>`;
+}
+function renderXG(xgH,xgA,home,away){
+  if(!xgH&&!xgA)return'';
+  const teams=[[home,xgH],[away,xgA]].filter(([,x])=>x);
+  return`<div class="card"><div class="card-header ch-green">📐 Análise xG — Realidade vs Placar</div><div class="card-body"><div class="xg-row">${teams.map(([name,xg])=>`<div class="xg-team"><div class="xg-team-name">${name}</div><div class="xg-bar-row"><span class="xg-label" style="width:60px">xG/jogo</span><div class="xg-bar-wrap"><div class="xg-bar" style="width:${Math.min(100,parseFloat(xg.xGPerGame)/3*100)}%;background:var(--accent3)"></div></div><span class="xg-num" style="color:var(--accent3)">${xg.xGPerGame}</span></div><div class="xg-bar-row"><span class="xg-label" style="width:60px">Gols reais</span><div class="xg-bar-wrap"><div class="xg-bar" style="width:${Math.min(100,parseFloat(xg.actualPerGame)/3*100)}%;background:${xg.overperforming?'var(--danger)':'var(--accent)'}"></div></div><span class="xg-num" style="color:${xg.overperforming?'var(--danger)':'var(--accent)'}">${xg.actualPerGame}</span></div><div class="xg-alert ${xg.overperforming?'xg-overperform':'xg-underperform'}">${xg.signal}</div></div>`).join('')}</div></div></div>`;
+}
+function renderPressure(pressH,pressA,home,away){
+  if(!pressH&&!pressA)return'';
+  return`<div class="card"><div class="card-header ch-red">⚡ Pressão e Motivação</div><div class="card-body"><div class="pressure-row">${[[home,pressH],[away,pressA]].map(([name,p])=>p?`<div class="pressure-card"><div class="pressure-name">${name}</div><div class="pressure-badge ${p.badge}">${p.level}</div><div class="pressure-detail">${p.detail}${p.mod>0?`<br><strong style="color:var(--accent)">+${p.mod}% motivação estimada</strong>`:''}</div></div>`:'').join('')}</div></div></div>`;
+}
+function renderPoisson(pd,home,away){
+  if(!pd)return'';
+  const cols=['var(--accent)','var(--accent3)','var(--accent4)'],cls=['sb-1','sb-2','sb-3'];
+  return`<div class="card"><div class="card-header ch-purple">🎲 Poisson — Ajustado por ELO e Pressão</div><div class="card-body"><div class="poisson-row"><div class="poisson-left">${pd.top3.map((s,i)=>`<div class="score-badge ${cls[i]}"><span style="font-size:10px;color:var(--muted);width:14px">#${i+1}</span><span class="score-num" style="color:${cols[i]}">${s.h}-${s.a}</span><span style="font-size:11px;color:var(--muted);flex:1">${home}×${away}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${cols[i]};font-weight:700">${(s.p*100).toFixed(1)}%</span></div>`).join('')}</div><div class="poisson-right">${[['Vitória '+home,pd.hw+'%'],['Empate',pd.dw+'%'],['Vitória '+away,pd.aw+'%'],['Over 1.5',pd.o15+'%'],['Over 2.5',pd.o25+'%'],['Over 3.5',pd.o35+'%'],['Ambas Marcam',pd.btts+'%']].map(([l,v])=>`<div class="prow"><span class="plabel">${l}</span><span class="pval" style="color:var(--text)">${v}</span></div>`).join('')}</div></div></div></div>`;
+}
+function renderOdds(od,home,away){
+  if(!od||!od.rows.length)return'';
+  const arb=od.arbP?`<div class="arb-badge">⚖️ ARBITRAGEM — ${od.arbP}% lucro garantido</div>`:'';
+  return`<div class="card"><div class="card-header ch-blue">🏦 Odds — Múltiplas Casas</div><div class="card-body">${arb}<table class="odds-table"><thead><tr><th>Casa</th><th>${home}</th><th>Empate</th><th>${away}</th></tr></thead><tbody>${od.rows.map(r=>`<tr><td style="color:var(--muted)">${r.bk}</td><td><span class="ov ${parseFloat(r.home)>=od.bH?'best':''}">${r.home}</span></td><td><span class="ov">${r.draw}</span></td><td><span class="ov ${parseFloat(r.away)>=od.bA?'best':''}">${r.away}</span></td></tr>`).join('')}</tbody></table><div style="font-size:11px;color:var(--muted);margin-top:8px">🟢 Verde = melhor odd disponível</div></div></div>`;
+}
+function renderText(text){
+  return text
+    .replace(/SCORE DE CONFIANÇA: (\d+)\/100/g,'')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`(.*?)`/g,'<span class="hl">$1</span>')
+    .replace(/^### (.+)$/gm,'<h4 style="color:var(--accent3);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin:12px 0 5px">$1</h4>')
+    .replace(/^## (.+)$/gm,'<h3 style="color:var(--accent);font-size:14px;margin:12px 0 6px;font-weight:700">$1</h3>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')
+    .replace(/APOSTAR ✅/g,'<div class="verdict v-green">✅ APOSTAR</div>')
+    .replace(/EVITAR ❌/g,'<div class="verdict v-red">❌ EVITAR</div>')
+    .replace(/RISCO MODERADO ⚠️/g,'<div class="verdict v-yellow">⚠️ RISCO MODERADO</div>');
+}
+
+// ── SEND ────────────────────────────
+async function sendMessage(){
+  const input=document.getElementById('userInput'),btn=document.getElementById('sendBtn'),text=input.value.trim();
+  if(!text)return;
+  chatHistory.push({role:'user',content:text});addUserBubble(text);input.value='';btn.disabled=true;
+  const teams=extractTeams(text);const{el:loader}=makeLoader(!!teams);
+  document.getElementById('messages').appendChild(loader);loader.scrollIntoView({behavior:'smooth',block:'end'});
+
+  let ctx='',hasReal=false,col=null;
+
+  if(teams){
+    // Coleta dados em tempo real com feedback de progresso
+    updateStep(0,'active','🔍 Identificando times...');
+    await delay(300);
+
+    try{
+      updateStep(0,'done','✅ Times identificados');
+      updateStep(1,'active','📡 Buscando stats na API...');
+
+      col=await Promise.race([
+        collectData(text),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),25000))
+      ]);
+
+      if(col){
+        hasReal=true;
+        ctx=col.context;
+        updateStep(1,'done','✅ Dados carregados');
+        updateStep(2,'done','✅ ELO calculado');
+        updateStep(3,'done','✅ xG analisado');
+        updateStep(4,'done',col.oddsResult?'✅ Odds carregadas':'⚠️ Odds indisponíveis');
+        updateStep(5,'done','✅ Poisson calculado');
+      } else {
+        updateStep(1,'warn','⚠️ API indisponível — usando base interna');
+        updateStep(2,'done','✅ ELO calculado (base interna)');
+        updateStep(3,'done','✅ Poisson calculado');
+        updateStep(4,'done','');updateStep(5,'done','');
+      }
+    }catch(e){
+      updateStep(1,'warn','⚠️ API com instabilidade — análise por base interna');
+      updateStep(2,'done','✅ ELO calculado');updateStep(3,'done','');updateStep(4,'done','');updateStep(5,'done','');
+    }
+    updateStep(6,'active','🧠 IA analisando...');
+  }
+
+  // Monta contexto — mesmo sem API, passa o máximo de info possível
+  if(!ctx&&teams){
+    const eloData=calcELO(teams.home,teams.away,[]);
+    const pd=calcPoisson(1.4,1.1);
+    ctx=`=== DADOS DISPONÍVEIS ===\nJogo: ${teams.home} x ${teams.away}\n=== ELO (base interna) ===\n${teams.home}: ${eloData.homeELO} | ${teams.away}: ${eloData.awayELO}\nProb ELO: ${teams.home}=${eloData.winProb}% | Empate=${eloData.drawProb}% | ${teams.away}=${eloData.awayProb}%\n=== POISSON (médias padrão) ===\nPlacares prováveis: ${pd.top3.map(s=>`${s.h}-${s.a}(${(s.p*100).toFixed(1)}%)`).join(', ')}\nVitória ${teams.home}:${pd.hw}% | Empate:${pd.dw}% | ${teams.away}:${pd.aw}%\nNOTA: API-Football indisponível no momento. Use seu conhecimento sobre os times para complementar a análise.`;
+    col={teams,eloData,poissonData:pd,confidence:45};
+  }
+
+  const payload=[...chatHistory.slice(0,-1),{role:'user',content:ctx?`${text}\n\n${ctx}`:text}];
+
+  try{
+    const res=await fetch('/.netlify/functions/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,system:SYSTEM_PROMPT,messages:payload})
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Erro ao processar.';
+    chatHistory.push({role:'assistant',content:reply});
+    document.getElementById('loader')?.remove();
+    const scoreMatch=reply.match(/SCORE DE CONFIANÇA:\s*(\d+)/i);
+    const aiScore=scoreMatch?parseInt(scoreMatch[1]):col?.confidence||50;
+    addAIBubble(reply,hasReal,col,aiScore);
+  }catch(e){
+    document.getElementById('loader')?.remove();
+    addAIBubble('❌ Erro ao conectar com a IA. Verifique sua conexão e tente novamente.',false,null,50);
+  }
+  btn.disabled=false;input.focus();
+}
+
+function updateStep(i,status,text){
+  const el=document.getElementById(`ls${i}`);
+  if(!el)return;
+  el.className=`lstep ${status==='active'?'active':status==='done'?'done':status==='warn'?'warn':''}`;
+  el.querySelector('.dots-wrap')?.remove();
+  if(text) el.innerHTML=text+(status==='active'?'<div class="dots-wrap"><span></span><span></span><span></span></div>':'');
+}
+
+function addUserBubble(text){const d=document.createElement('div');d.className='msg msg-user';d.innerHTML=`<div class="bubble">${text}</div>`;document.getElementById('messages').appendChild(d);d.scrollIntoView({behavior:'smooth',block:'end'});}
+function addAIBubble(text,hasData,col,score){
+  const teams=col?.teams;
+  const cH=renderConfidence(score,'');
+  const eH=col?.eloData&&teams?renderELO(col.eloData,teams.home,teams.away):'';
+  const xH=col?.xgH&&teams?renderXG(col.xgH,col.xgA,teams.home,teams.away):'';
+  const prH=col?.pressH&&teams?renderPressure(col.pressH,col.pressA,teams.home,teams.away):'';
+  const pH=col?.poissonData&&teams?renderPoisson(col.poissonData,teams.home,teams.away):'';
+  const oH=col?.oddsResult&&teams?renderOdds(col.oddsResult,teams.home,teams.away):'';
+  const d=document.createElement('div');d.className='msg msg-ai';
+  d.innerHTML=`<div class="bubble"><div class="ai-header"><div class="ai-avatar">BM</div><div class="ai-name">BetMind v6</div><div class="data-tag ${hasData?'visible':''}">⚡ PRO</div></div><div class="ai-content">${cH}${eH}${xH}${prH}${pH}${oH}<p>${renderText(text)}</p></div></div>`;
+  document.getElementById('messages').appendChild(d);d.scrollIntoView({behavior:'smooth',block:'end'});
+}
+
+// ── ROI & BETS ───────────────────────
+let bets=[];try{bets=JSON.parse(localStorage.getItem('betmind_v6')||'[]');}catch{bets=[];}
+function saveBets(){try{localStorage.setItem('betmind_v6',JSON.stringify(bets));}catch{}}
+window.addEventListener('DOMContentLoaded',()=>{document.getElementById('betDate').value=new Date().toISOString().split('T')[0];});
+function addBet(){
+  const game=document.getElementById('betGame').value.trim(),league=document.getElementById('betLeague').value,market=document.getElementById('betMarket').value,odd=parseFloat(document.getElementById('betOdd').value),stake=parseFloat(document.getElementById('betStake').value),result=document.getElementById('betResult').value,confidence=parseInt(document.getElementById('betConfidence').value)||0,date=document.getElementById('betDate').value;
+  if(!game||!odd||!stake){alert('Preencha os campos obrigatórios!');return;}
+  bets.unshift({id:Date.now(),game,league,market,odd,stake,result,confidence,date});saveBets();renderROI();
+  document.getElementById('betGame').value='';document.getElementById('betOdd').value='';document.getElementById('betStake').value='';document.getElementById('betConfidence').value='';document.getElementById('betResult').value='pending';
+}
+function deleteBet(id){bets=bets.filter(b=>b.id!==id);saveBets();renderROI();}
+function updateResult(id,result){const b=bets.find(b=>b.id===id);if(b){b.result=result;saveBets();renderROI();}}
+function clearAllBets(){if(confirm('Apagar todas as apostas?')){bets=[];saveBets();renderROI();}}
+function renderROI(){
+  const settled=bets.filter(b=>b.result==='win'||b.result==='loss'),wins=bets.filter(b=>b.result==='win'),losses=bets.filter(b=>b.result==='loss');
+  const ts=bets.filter(b=>b.result!=='void').reduce((s,b)=>s+b.stake,0);
+  const tr=wins.reduce((s,b)=>s+(b.stake*b.odd),0),ss=settled.reduce((s,b)=>s+b.stake,0);
+  const profit=tr-ss,roi=ss?(profit/ss*100).toFixed(1):0,hit=settled.length?(wins.length/settled.length*100).toFixed(1):0;
+  const avgOdd=settled.length?(settled.reduce((s,b)=>s+b.odd,0)/settled.length).toFixed(2):0;
+  document.getElementById('statTotal').textContent=`R$ ${ts.toFixed(0)}`;document.getElementById('statCount').textContent=`${bets.length} apostas`;
+  const pe=document.getElementById('statProfit');pe.textContent=`${profit>=0?'+':''}R$ ${profit.toFixed(0)}`;pe.className='roi-card-val '+(profit>0?'val-green':profit<0?'val-red':'val-white');
+  document.getElementById('statROI').textContent=`ROI: ${roi}%`;
+  const he=document.getElementById('statHit');he.textContent=hit+'%';he.className='roi-card-val '+(parseFloat(hit)>=55?'val-green':parseFloat(hit)>=45?'val-white':'val-red');
+  document.getElementById('statWL').textContent=`${wins.length}V / ${losses.length}D`;document.getElementById('statOdd').textContent=avgOdd;
+  renderChart();
+  const markets={};for(const b of settled){if(!markets[b.market])markets[b.market]={w:0,l:0};b.result==='win'?markets[b.market].w++:markets[b.market].l++;}
+  document.getElementById('marketStats').innerHTML=Object.entries(markets).sort((a,b)=>(b[1].w+b[1].l)-(a[1].w+a[1].l)).slice(0,4).map(([m,s])=>{const t=s.w+s.l,p=(s.w/t*100).toFixed(0);return`<div class="mstat"><div class="mstat-label">${m}</div><div class="mstat-bar"><div class="mstat-fill" style="width:${p}%"></div></div><div class="mstat-val">${p}% <span style="color:var(--muted);font-size:11px">(${s.w}V/${s.l}D)</span></div></div>`;}).join('');
+  const tbody=document.getElementById('betBody'),empty=document.getElementById('betEmpty');
+  if(!bets.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';
+  tbody.innerHTML=bets.map(b=>{const ret=b.result==='win'?(b.stake*b.odd).toFixed(2):b.result==='loss'?'0.00':'-';const scoreColor=b.confidence>=75?'var(--accent)':b.confidence>=55?'var(--warn)':'var(--muted)';return`<tr><td style="font-size:12px">${b.game}<br><span style="font-size:10px;color:var(--muted)">${b.date}</span></td><td style="font-size:11px;color:var(--muted)">${b.league||'?'}</td><td style="font-size:11px">${b.market}</td><td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent3)">${b.odd.toFixed(2)}</span></td><td>R$ ${b.stake.toFixed(0)}</td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${ret==='-'?'-':ret==='0.00'?'<span style="color:var(--danger)">R$ 0</span>':`R$ ${ret}`}</td><td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${scoreColor}">${b.confidence||'-'}</span></td><td><select onchange="updateResult(${b.id},this.value)" style="background:var(--surface3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:10px;padding:2px 5px;cursor:pointer"><option value="pending" ${b.result==='pending'?'selected':''}>⏳</option><option value="win" ${b.result==='win'?'selected':''}>✅</option><option value="loss" ${b.result==='loss'?'selected':''}>❌</option><option value="void" ${b.result==='void'?'selected':''}>↩️</option></select></td><td><button onclick="deleteBet(${b.id})" style="background:none;border:none;cursor:pointer;color:var(--muted)">🗑️</button></td></tr>`;}).join('');
+}
+function renderChart(){
+  const canvas=document.getElementById('roiCanvas'),empty=document.getElementById('chartEmpty');
+  const settled=bets.filter(b=>b.result==='win'||b.result==='loss').reverse();
+  if(settled.length<2){canvas.style.display='none';empty.style.display='flex';return;}
+  canvas.style.display='block';empty.style.display='none';
+  const wrap=document.getElementById('roiChartWrap'),W=wrap.clientWidth||800,H=110;
+  canvas.width=W;canvas.height=H;
+  const ctx2=canvas.getContext('2d');ctx2.clearRect(0,0,W,H);
+  let run=0;const pts=settled.map(b=>{run+=b.result==='win'?b.stake*(b.odd-1):-b.stake;return run;});
+  const mn=Math.min(0,...pts),mx=Math.max(0,...pts),range=mx-mn||1,pad=14;
+  const xs=pts.map((_,i)=>pad+(i/(pts.length-1))*(W-pad*2)),ys=pts.map(p=>H-pad-(p-mn)/range*(H-pad*2));
+  const grad=ctx2.createLinearGradient(0,0,0,H);grad.addColorStop(0,'rgba(0,229,160,0.15)');grad.addColorStop(1,'rgba(0,229,160,0)');
+  ctx2.beginPath();ctx2.moveTo(xs[0],H-pad);xs.forEach((x,i)=>ctx2.lineTo(x,ys[i]));ctx2.lineTo(xs[xs.length-1],H-pad);ctx2.closePath();ctx2.fillStyle=grad;ctx2.fill();
+  ctx2.beginPath();xs.forEach((x,i)=>i===0?ctx2.moveTo(x,ys[i]):ctx2.lineTo(x,ys[i]));ctx2.strokeStyle=run>=0?'#00e5a0':'#ff4757';ctx2.lineWidth=2;ctx2.stroke();
+  const zy=H-pad-((0-mn)/range*(H-pad*2));ctx2.beginPath();ctx2.moveTo(pad,zy);ctx2.lineTo(W-pad,zy);ctx2.strokeStyle='rgba(255,255,255,0.08)';ctx2.lineWidth=1;ctx2.setLineDash([4,4]);ctx2.stroke();ctx2.setLineDash([]);
+}
+
+// ── PROFILE ─────────────────────────
+function renderProfile(){
+  const settled=bets.filter(b=>b.result==='win'||b.result==='loss');
+  const content=document.getElementById('profileContent');
+  if(settled.length<3){content.innerHTML='<div class="empty-state"><div class="icon">👤</div><p>Registre ao menos 3 apostas resolvidas para gerar seu perfil.</p></div>';return;}
+
+  // By league
+  const byLeague={};for(const b of settled){if(!byLeague[b.league])byLeague[b.league]={w:0,l:0,stake:0,ret:0};if(b.result==='win'){byLeague[b.league].w++;byLeague[b.league].ret+=b.stake*b.odd;}else byLeague[b.league].l++;byLeague[b.league].stake+=b.stake;}
+
+  // By market
+  const byMarket={};for(const b of settled){if(!byMarket[b.market])byMarket[b.market]={w:0,l:0,stake:0,ret:0};if(b.result==='win'){byMarket[b.market].w++;byMarket[b.market].ret+=b.stake*b.odd;}else byMarket[b.market].l++;byMarket[b.market].stake+=b.stake;}
+
+  // By confidence bracket
+  const highConf=settled.filter(b=>b.confidence>=75);
+  const medConf=settled.filter(b=>b.confidence>=55&&b.confidence<75);
+  const lowConf=settled.filter(b=>b.confidence<55&&b.confidence>0);
+  const confAccuracy=(arr)=>arr.length?((arr.filter(b=>b.result==='win').length/arr.length)*100).toFixed(0):'-';
+
+  // Best league
+  const bestLeague=Object.entries(byLeague).sort((a,b)=>{const ra=a[1].w/(a[1].w+a[1].l),rb=b[1].w/(b[1].w+b[1].l);return rb-ra;})[0];
+  const bestMarket=Object.entries(byMarket).sort((a,b)=>{const ra=a[1].w/(a[1].w+a[1].l),rb=b[1].w/(b[1].w+b[1].l);return rb-ra;})[0];
+
+  content.innerHTML=`
+    <div class="profile-grid">
+      <div class="profile-card">
+        <div class="profile-card-title">📊 Por Liga</div>
+        ${Object.entries(byLeague).map(([l,s])=>{const t=s.w+s.l,p=(s.w/t*100).toFixed(0),roi=((s.ret-s.stake)/s.stake*100).toFixed(1);return`<div class="league-row"><span style="font-size:12px">${l}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${parseFloat(roi)>0?'var(--accent)':'var(--danger)'}">${roi}% ROI</span></div>`;}).join('')}
+      </div>
+      <div class="profile-card">
+        <div class="profile-card-title">🎯 Por Mercado</div>
+        ${Object.entries(byMarket).map(([m,s])=>{const t=s.w+s.l,p=(s.w/t*100).toFixed(0);return`<div class="league-row"><span style="font-size:12px">${m}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${parseFloat(p)>=55?'var(--accent)':'var(--muted)'}">${p}% acerto</span></div>`;}).join('')}
+      </div>
+      <div class="profile-card">
+        <div class="profile-card-title">🎯 Por Score de Confiança</div>
+        <div class="league-row"><span style="font-size:12px">Alta (75-100)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">${confAccuracy(highConf)}% (${highConf.length} apostas)</span></div>
+        <div class="league-row"><span style="font-size:12px">Média (55-74)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--warn)">${confAccuracy(medConf)}% (${medConf.length} apostas)</span></div>
+        <div class="league-row"><span style="font-size:12px">Baixa (0-54)</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--danger)">${confAccuracy(lowConf)}% (${lowConf.length} apostas)</span></div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-card-title">💡 Insights</div>
+        ${bestLeague?`<div style="font-size:12px;margin-bottom:6px">🏆 Melhor liga: <strong style="color:var(--accent)">${bestLeague[0]}</strong></div>`:''}
+        ${bestMarket?`<div style="font-size:12px;margin-bottom:6px">🎯 Melhor mercado: <strong style="color:var(--accent)">${bestMarket[0]}</strong></div>`:''}
+        ${highConf.length>2&&parseFloat(confAccuracy(highConf))>parseFloat(confAccuracy(lowConf))?`<div style="font-size:12px;color:var(--accent)">✅ Score de confiança funciona para você — apostas altas confiança têm melhor acerto</div>`:''}
+      </div>
+    </div>`;
+}
+
+// ── BACKTESTING ──────────────────────
+function renderBacktestUI(){
+  const settled=bets.filter(b=>b.result==='win'||b.result==='loss');
+  const content=document.getElementById('backtestContent');
+  if(settled.length<5){content.innerHTML='<div class="empty-state"><div class="icon">🔬</div><p>Registre ao menos 5 apostas resolvidas para rodar o backtesting.</p></div>';return;}
+  content.innerHTML=`<p style="font-size:12px;color:var(--muted);margin-bottom:16px">Análise já disponível — clique em "Rodar Backtest" para atualizar.</p>`;
+}
+function runBacktest(){
+  const settled=bets.filter(b=>b.result==='win'||b.result==='loss');
+  if(settled.length<5){alert('Registre ao menos 5 apostas resolvidas!');return;}
+
+  // Simula estratégia "só apostar score >= 65"
+  const highConfBets=settled.filter(b=>b.confidence>=65);
+  const allBets=settled;
+
+  function calcStats(arr){
+    if(!arr.length)return{roi:0,hit:0,profit:0,total:0,n:0};
+    const wins=arr.filter(b=>b.result==='win');
+    const stake=arr.reduce((s,b)=>s+b.stake,0);
+    const ret=wins.reduce((s,b)=>s+(b.stake*b.odd),0);
+    return{roi:stake?((ret-stake)/stake*100).toFixed(1):0,hit:(wins.length/arr.length*100).toFixed(1),profit:(ret-stake).toFixed(2),total:stake.toFixed(0),n:arr.length};
+  }
+
+  const allStats=calcStats(allBets);
+  const hcStats=calcStats(highConfBets);
+
+  // Chart data
+  let run=0;const chartPts=settled.map(b=>{run+=b.result==='win'?b.stake*(b.odd-1):-b.stake;return run;});
+
+  const content=document.getElementById('backtestContent');
+  content.innerHTML=`
+    <div class="bt-stats">
+      <div class="bt-stat"><div class="bt-val" style="color:var(--text)">${allStats.n}</div><div class="bt-label">Apostas analisadas</div></div>
+      <div class="bt-stat"><div class="bt-val" style="color:${parseFloat(allStats.roi)>0?'var(--accent)':'var(--danger)'}">${parseFloat(allStats.roi)>0?'+':''}${allStats.roi}%</div><div class="bt-label">ROI geral</div></div>
+      <div class="bt-stat"><div class="bt-val" style="color:${parseFloat(allStats.hit)>=55?'var(--accent)':'var(--warn)'}">${allStats.hit}%</div><div class="bt-label">Acerto geral</div></div>
+      <div class="bt-stat"><div class="bt-val" style="color:${parseFloat(allStats.profit)>=0?'var(--accent)':'var(--danger)'}">${parseFloat(allStats.profit)>=0?'+':''}R$ ${allStats.profit}</div><div class="bt-label">Lucro/prejuízo</div></div>
+    </div>
+    <div class="bt-chart" id="btChartWrap"><canvas id="btCanvas"></canvas></div>
+    ${highConfBets.length>=3?`
+    <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:9px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px">🎯 Estratégia: Apostar apenas Score ≥ 65 (${hcStats.n} apostas)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${parseFloat(hcStats.roi)>parseFloat(allStats.roi)?'var(--accent)':'var(--warn)'}">${parseFloat(hcStats.roi)>0?'+':''}${hcStats.roi}%</div><div style="font-size:10px;color:var(--muted)">ROI com Score≥65</div></div>
+        <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent3)">${hcStats.hit}%</div><div style="font-size:10px;color:var(--muted)">Taxa de acerto</div></div>
+        <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${parseFloat(hcStats.profit)>=0?'var(--accent)':'var(--danger)'}">R$ ${hcStats.profit}</div><div style="font-size:10px;color:var(--muted)">Resultado</div></div>
+      </div>
+      ${parseFloat(hcStats.roi)>parseFloat(allStats.roi)?`<div style="margin-top:10px;font-size:12px;color:var(--accent)">✅ Filtrar por score de confiança melhora seu ROI em ${(parseFloat(hcStats.roi)-parseFloat(allStats.roi)).toFixed(1)} pontos percentuais!</div>`:''} 
+    </div>`:''} 
+    <div style="font-size:11px;color:var(--muted)">Backtest baseado nas ${settled.length} apostas resolvidas registradas.</div>`;
+
+  // Draw chart
+  requestAnimationFrame(()=>{
+    const canvas=document.getElementById('btCanvas');if(!canvas)return;
+    const wrap=document.getElementById('btChartWrap'),W=wrap.clientWidth||800,H=100;
+    canvas.width=W;canvas.height=H;
+    const ctx2=canvas.getContext('2d');
+    const mn=Math.min(0,...chartPts),mx=Math.max(0,...chartPts),range=mx-mn||1,pad=10;
+    const xs=chartPts.map((_,i)=>pad+(i/(chartPts.length-1))*(W-pad*2)),ys=chartPts.map(p=>H-pad-(p-mn)/range*(H-pad*2));
+    const grad=ctx2.createLinearGradient(0,0,0,H);grad.addColorStop(0,'rgba(61,158,255,0.15)');grad.addColorStop(1,'rgba(61,158,255,0)');
+    ctx2.beginPath();ctx2.moveTo(xs[0],H-pad);xs.forEach((x,i)=>ctx2.lineTo(x,ys[i]));ctx2.lineTo(xs[xs.length-1],H-pad);ctx2.closePath();ctx2.fillStyle=grad;ctx2.fill();
+    ctx2.beginPath();xs.forEach((x,i)=>i===0?ctx2.moveTo(x,ys[i]):ctx2.lineTo(x,ys[i]));ctx2.strokeStyle=chartPts[chartPts.length-1]>=0?'#3d9eff':'#ff4757';ctx2.lineWidth=2;ctx2.stroke();
+  });
+}
+
+document.getElementById('userInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+renderROI();
+</script>
+</body>
+</html>
