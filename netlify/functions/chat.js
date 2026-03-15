@@ -270,8 +270,18 @@ ${awayTeam.name}: ${odds.bestAway} (${odds.bestAwayBook})` : 'ODDS: n√£o dispon√
       };
     }
 
-    // Chama Anthropic
-    const anthropicBody = JSON.stringify({ model, max_tokens, system, messages: enrichedMessages });
+    // Chama Anthropic ‚Äî for√ßa modelo e max_tokens seguros
+    const safeModel = 'claude-3-5-haiku-20241022';
+    const safeMaxTokens = Math.min(max_tokens || 1024, 1024);
+    const anthropicBody = JSON.stringify({
+      model: safeModel,
+      max_tokens: safeMaxTokens,
+      system,
+      messages: enrichedMessages
+    });
+
+    console.log(`Chamando Anthropic: model=${safeModel} max_tokens=${safeMaxTokens}`);
+
     const result = await httpsRequest({
       hostname: 'api.anthropic.com',
       path: '/v1/messages',
@@ -284,6 +294,19 @@ ${awayTeam.name}: ${odds.bestAway} (${odds.bestAwayBook})` : 'ODDS: n√£o dispon√
       }
     }, anthropicBody);
 
+    console.log(`Anthropic status: ${result.status}`);
+
+    // Se a Anthropic retornou erro, loga e propaga mensagem clara
+    if (result.data && result.data.type === 'error') {
+      const errMsg = result.data.error?.message || JSON.stringify(result.data);
+      console.error('Anthropic API error:', errMsg);
+      return {
+        statusCode: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: { message: errMsg } })
+      };
+    }
+
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -291,11 +314,11 @@ ${awayTeam.name}: ${odds.bestAway} (${odds.bestAwayBook})` : 'ODDS: n√£o dispon√
     };
 
   } catch (err) {
-    console.error('Erro:', err.message);
+    console.error('Erro interno:', err.message);
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: err.message })
+      body: JSON.stringify({ error: { message: err.message } })
     };
   }
 };
